@@ -2,6 +2,7 @@
 # This implementation is largely based on the PoiClaClu package
 # Own implementation for the purpose of understanding it better
 
+source('helper_functions.R')
 PLDA <- function(x,x_test, y, beta = 1, prior=NULL, method = c('mle','deseq','quantile')){
   # x : n x p matrix, where n indicates observations and p indicates features
   # x_test : m x p matrix for testing, where m indicates observations and p indicates features
@@ -29,7 +30,7 @@ PLDA <- function(x,x_test, y, beta = 1, prior=NULL, method = c('mle','deseq','qu
     dhat[i,] = division
   }
  
-  shat = compute_shat(x, x_test, method)  
+  shat = compute.shat(x, x_test, method)  
   ghat = colSums(x)
   
   p = matrix(0,ncol = length(classes),nrow = nrow(x_test))
@@ -40,28 +41,4 @@ PLDA <- function(x,x_test, y, beta = 1, prior=NULL, method = c('mle','deseq','qu
   }
   yhat = classes[apply(p,1,which.max)]
   return(list(p = p, yhat = yhat)) 
-}
-
-
-compute_shat <- function(x_train,x_test,method = c('mle','deseq','quatile')){
-  # Compute size factor based on defined method
-  # 'mle' : total count for the ith observation, which is based on the MLE for Nij 
-  # 'deseq' : median ratio
-  # 'quantile' 
-  
-  if (method == 'mle'){
-    shat = rowSums(x_test)/sum(x_train)
-  }
-  else if (method == 'quantile'){
-    shat = pmax(1, apply(x_test, 1, quantile, 0.75))
-    shat = shat/sum(apply(x_train, 1, quantile, 0.75))
-  }  
-  else if (method == 'deseq'){
-    counts_train <- t(x_train)
-    counts_test <- t(x_test)
-    geomeans <- exp(rowMeans(log(counts_train)))
-    rawsizestr <- apply(counts_train, 2, function(cnts) median((cnts/geomeans)[geomeans > 0]))
-    shat <- apply(counts_test, 2, function(cnts) median((cnts/geomeans)[geomeans > 0], na.rm = TRUE))/sum(rawsizestr)
-  }
-  return(shat)
 }
