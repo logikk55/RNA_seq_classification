@@ -1,6 +1,6 @@
 NBLDA <- function(x, x_test, y, disperhat, beta = 1, prior = NULL, method = c('mle', 'deseq', 'quantile')) 
 {
-  # x: Matrix of size n x p where n is amount of observations and p is amount of f eatures
+  # x: Matrix of size n x p where n is amount of observations and p is amount of features
   # x_test: Matrix of size m x p for predicting class labels 
   # y: Labels for each observation in x
   # disperhat: Dispersion parameter for NBLDA model
@@ -76,16 +76,20 @@ size_estimation <- function(x_train, x_test, method) {
 }
 
 estimate_dispersion <- function(X) {
+  X = t(X)
   s_means <- rowMeans(X)
-  g_means <- colMeans(X)
+  s_vars <- rowVars(X)
+  tt = getT(X, sizeFactors=rep(1,ncol(X)), plotASD = T)$target  
+  print(tt)
   
-  disp <- (g_means - s_means) / s_means^2
+  disp <- (s_vars - s_means) / s_means^2
   disp0 <- numeric()
   for (i in 1:length(disp)){
     d <- disp[i]
     disp0[i] <- max(0,d)
   }
-  adj_disp <- getAdjustDisp(disp0)
+  
+  adj_disp <- getAdjustDisp(disp0, shrinkTarget = tt)$adj
   
   return(adj_disp)
   #delta <- calculate_weights(X,disp0)
